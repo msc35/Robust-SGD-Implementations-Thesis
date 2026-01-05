@@ -1,6 +1,6 @@
 # Robust SGD Implementation - Benchmarking Suite
 
-This repository contains a clean, modular implementation of robust stochastic gradient descent (SGD) algorithms for benchmarking on noisy datasets. The code has been refactored from a Jupyter notebook into a professional Python package structure.
+This repository contains a clean, modular implementation of robust stochastic gradient descent (SGD) algorithms for benchmarking on noisy datasets.
 
 ## Overview
 
