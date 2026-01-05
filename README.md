@@ -224,10 +224,7 @@ For more detailed analysis, use the plotting functions in `src/utils.py`:
 
 If you use this code, please cite the original papers:
 
-1. **MKL-SGD**: "Choosing the Sample with Lowest Loss makes SGD Robust"
-2. **RHO-LOSS**: "Prioritized Training on Points that are learnable, Worth Learning, and Not Yet Learnt"
+MKL-SGD: Shah, V., Wu, X., & Sanghavi, S. (2020). Choosing the Sample with Lowest Loss makes SGD Robust. Proceedings of the 23rd International Conference on Artificial Intelligence and Statistics (AISTATS). 
 
-## License
-
-[Add your license here]
+RHO-LOSS: Mindermann, S., et al. (2022). Prioritized Training on Points that are Learnable, Worth Learning, and Not Yet Learnt. Proceedings of the 39th International Conference on Machine Learning (ICML). "
 
