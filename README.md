@@ -168,7 +168,6 @@ Robust-SGD-Implementation-Thesis/
 ├── notebooks/
 │   └── Benchmark_Algorithms.ipynb  # Original notebook (unchanged)
 ├── data/                    # Dataset storage
-└── checkpoints/             # Model checkpoints and IL maps
 ```
 
 ## Key Differences: MKL-SGD vs RHO-LOSS
