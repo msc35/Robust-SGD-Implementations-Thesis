@@ -1,0 +1,846 @@
+[1m
+================================================================================[0m
+[1mDEBUG SUITE: Running 36 experiments with 5 epochs each[0m
+[1m================================================================================
+[0m
+
+[1/36] [93mCIFAR-100 - Standard SGD[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - Standard SGD[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm standard[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - Standard SGD[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[2/36] [93mCIFAR-100 - MKL-SGD (k=2.0)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - MKL-SGD (k=2.0)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm mkl --k_ratio 2.0[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - MKL-SGD (k=2.0)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[3/36] [93mCIFAR-100 - MKL-SGD (k=1.5)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - MKL-SGD (k=1.5)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm mkl --k_ratio 1.5[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - MKL-SGD (k=1.5)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[4/36] [93mCIFAR-100 - MKL-SGD (k=1.25)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - MKL-SGD (k=1.25)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm mkl --k_ratio 1.25[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - MKL-SGD (k=1.25)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[5/36] [93mCIFAR-100 - RHO-LOSS (sel=0.1)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - RHO-LOSS (sel=0.1)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm rho --selection_ratio 0.1[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - RHO-LOSS (sel=0.1)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[6/36] [93mCIFAR-100 - RHO-LOSS (sel=0.2)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - RHO-LOSS (sel=0.2)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm rho --selection_ratio 0.2[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - RHO-LOSS (sel=0.2)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[7/36] [93mCIFAR-100 - RHO-LOSS (sel=0.3)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - RHO-LOSS (sel=0.3)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm rho --selection_ratio 0.3[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - RHO-LOSS (sel=0.3)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[8/36] [93mCIFAR-100 - RHO-LOSS (sel=0.4)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - RHO-LOSS (sel=0.4)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm rho --selection_ratio 0.4[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - RHO-LOSS (sel=0.4)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[9/36] [93mCIFAR-100 - HASA (T=5, k=0.6)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - HASA (T=5, k=0.6)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm hasa --window_size 5 --selection_ratio 0.6[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - HASA (T=5, k=0.6)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[10/36] [93mCIFAR-100 - HASA (T=5, k=0.7)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - HASA (T=5, k=0.7)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm hasa --window_size 5 --selection_ratio 0.7[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - HASA (T=5, k=0.7)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[11/36] [93mCIFAR-100 - HASA (T=10, k=0.6)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - HASA (T=10, k=0.6)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm hasa --window_size 10 --selection_ratio 0.6[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - HASA (T=10, k=0.6)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[12/36] [93mCIFAR-100 - HASA (T=10, k=0.7)[0m
+[94m
+================================================================================[0m
+[1mRunning: CIFAR-100 - HASA (T=10, k=0.7)[0m
+[93mCommand: python main.py --no_plot --task cifar100 --epochs 5 --algorithm hasa --window_size 10 --selection_ratio 0.7[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CIFAR-100 - HASA (T=10, k=0.7)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[13/36] [93mMNIST - Standard SGD[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - Standard SGD[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm standard[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - Standard SGD[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[14/36] [93mMNIST - MKL-SGD (k=2.0)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - MKL-SGD (k=2.0)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm mkl --k_ratio 2.0[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - MKL-SGD (k=2.0)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[15/36] [93mMNIST - MKL-SGD (k=1.5)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - MKL-SGD (k=1.5)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm mkl --k_ratio 1.5[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - MKL-SGD (k=1.5)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[16/36] [93mMNIST - MKL-SGD (k=1.25)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - MKL-SGD (k=1.25)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm mkl --k_ratio 1.25[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - MKL-SGD (k=1.25)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[17/36] [93mMNIST - RHO-LOSS (sel=0.1)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - RHO-LOSS (sel=0.1)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm rho --selection_ratio 0.1[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - RHO-LOSS (sel=0.1)[0m
+[91mError details:
+Return code: -11
+STDOUT:
+
+STDERR:
+
+[0m
+
+[18/36] [93mMNIST - RHO-LOSS (sel=0.2)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - RHO-LOSS (sel=0.2)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm rho --selection_ratio 0.2[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - RHO-LOSS (sel=0.2)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[19/36] [93mMNIST - RHO-LOSS (sel=0.3)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - RHO-LOSS (sel=0.3)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm rho --selection_ratio 0.3[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - RHO-LOSS (sel=0.3)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[20/36] [93mMNIST - RHO-LOSS (sel=0.4)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - RHO-LOSS (sel=0.4)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm rho --selection_ratio 0.4[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - RHO-LOSS (sel=0.4)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[21/36] [93mMNIST - HASA (T=5, k=0.6)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - HASA (T=5, k=0.6)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm hasa --window_size 5 --selection_ratio 0.6[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - HASA (T=5, k=0.6)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[22/36] [93mMNIST - HASA (T=5, k=0.7)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - HASA (T=5, k=0.7)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm hasa --window_size 5 --selection_ratio 0.7[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - HASA (T=5, k=0.7)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[23/36] [93mMNIST - HASA (T=10, k=0.6)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - HASA (T=10, k=0.6)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm hasa --window_size 10 --selection_ratio 0.6[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - HASA (T=10, k=0.6)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[24/36] [93mMNIST - HASA (T=10, k=0.7)[0m
+[94m
+================================================================================[0m
+[1mRunning: MNIST - HASA (T=10, k=0.7)[0m
+[93mCommand: python main.py --no_plot --task mnist --epochs 5 --algorithm hasa --window_size 10 --selection_ratio 0.7[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: MNIST - HASA (T=10, k=0.7)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[25/36] [93mCLOUD - Standard SGD[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - Standard SGD[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm standard[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - Standard SGD[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[26/36] [93mCLOUD - MKL-SGD (k=2.0)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - MKL-SGD (k=2.0)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm mkl --k_ratio 2.0[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - MKL-SGD (k=2.0)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[27/36] [93mCLOUD - MKL-SGD (k=1.5)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - MKL-SGD (k=1.5)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm mkl --k_ratio 1.5[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - MKL-SGD (k=1.5)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[28/36] [93mCLOUD - MKL-SGD (k=1.25)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - MKL-SGD (k=1.25)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm mkl --k_ratio 1.25[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - MKL-SGD (k=1.25)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[29/36] [93mCLOUD - RHO-LOSS (sel=0.1)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - RHO-LOSS (sel=0.1)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm rho --selection_ratio 0.1[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - RHO-LOSS (sel=0.1)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[30/36] [93mCLOUD - RHO-LOSS (sel=0.2)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - RHO-LOSS (sel=0.2)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm rho --selection_ratio 0.2[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - RHO-LOSS (sel=0.2)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[31/36] [93mCLOUD - RHO-LOSS (sel=0.3)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - RHO-LOSS (sel=0.3)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm rho --selection_ratio 0.3[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - RHO-LOSS (sel=0.3)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[32/36] [93mCLOUD - RHO-LOSS (sel=0.4)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - RHO-LOSS (sel=0.4)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm rho --selection_ratio 0.4[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - RHO-LOSS (sel=0.4)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[33/36] [93mCLOUD - HASA (T=5, k=0.6)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - HASA (T=5, k=0.6)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm hasa --window_size 5 --selection_ratio 0.6[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - HASA (T=5, k=0.6)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[34/36] [93mCLOUD - HASA (T=5, k=0.7)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - HASA (T=5, k=0.7)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm hasa --window_size 5 --selection_ratio 0.7[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - HASA (T=5, k=0.7)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[35/36] [93mCLOUD - HASA (T=10, k=0.6)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - HASA (T=10, k=0.6)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm hasa --window_size 10 --selection_ratio 0.6[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - HASA (T=10, k=0.6)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+
+[36/36] [93mCLOUD - HASA (T=10, k=0.7)[0m
+[94m
+================================================================================[0m
+[1mRunning: CLOUD - HASA (T=10, k=0.7)[0m
+[93mCommand: python main.py --no_plot --task cloud --epochs 5 --algorithm hasa --window_size 10 --selection_ratio 0.7[0m
+[94m================================================================================
+[0m
+[91m✗ FAILED: CLOUD - HASA (T=10, k=0.7)[0m
+[91mError details:
+Return code: -10
+STDOUT:
+
+STDERR:
+
+[0m
+[1m
+================================================================================[0m
+[1mDEBUG SUITE SUMMARY[0m
+[1m================================================================================
+[0m
+[1mTotal Experiments: 36[0m
+[92mSuccessful: 0[0m
+[91mFailed: 36[0m
+[91m
+================================================================================[0m
+[91mFAILED EXPERIMENTS:[0m
+[91m================================================================================
+[0m
+[91m✗ CIFAR-100 - Standard SGD[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - MKL-SGD (k=2.0)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - MKL-SGD (k=1.5)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - MKL-SGD (k=1.25)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - RHO-LOSS (sel=0.1)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - RHO-LOSS (sel=0.2)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - RHO-LOSS (sel=0.3)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - RHO-LOSS (sel=0.4)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - HASA (T=5, k=0.6)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - HASA (T=5, k=0.7)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - HASA (T=10, k=0.6)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CIFAR-100 - HASA (T=10, k=0.7)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - Standard SGD[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - MKL-SGD (k=2.0)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - MKL-SGD (k=1.5)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - MKL-SGD (k=1.25)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - RHO-LOSS (sel=0.1)[0m
+[91m  Return code: -11
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - RHO-LOSS (sel=0.2)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - RHO-LOSS (sel=0.3)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - RHO-LOSS (sel=0.4)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - HASA (T=5, k=0.6)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - HASA (T=5, k=0.7)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - HASA (T=10, k=0.6)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ MNIST - HASA (T=10, k=0.7)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - Standard SGD[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - MKL-SGD (k=2.0)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - MKL-SGD (k=1.5)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - MKL-SGD (k=1.25)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - RHO-LOSS (sel=0.1)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - RHO-LOSS (sel=0.2)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - RHO-LOSS (sel=0.3)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - RHO-LOSS (sel=0.4)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - HASA (T=5, k=0.6)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - HASA (T=5, k=0.7)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - HASA (T=10, k=0.6)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m
+[91m✗ CLOUD - HASA (T=10, k=0.7)[0m
+[91m  Return code: -10
+STDOUT:
+
+STDERR:
+
+...[0m

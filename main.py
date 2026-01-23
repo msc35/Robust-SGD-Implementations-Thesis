@@ -28,7 +28,7 @@ from src.data_loader import (
 )
 from src.models import MNIST_CNN, VGG_Small, Cloud_ResNet18
 from src.trainers import (
-    train_standard_sgd, train_min_k_loss, train_rho_loss,
+    train_standard_sgd, train_min_k_loss, train_rho_loss, train_hasa,
     compute_irreducible_loss, train_il_model
 )
 from src.utils import validate, plot_results_custom, create_summary_table
@@ -201,6 +201,10 @@ def setup_cloud_data(device):
     criterion = nn.CrossEntropyLoss().to(device)
     criterion_nored = nn.CrossEntropyLoss(reduction='none').to(device)
     
+    # Create mapping from global indices to local training indices for RHO-LOSS
+    # This is needed because ApplyTransformSubset returns global indices
+    global_to_local_map = {global_idx: local_idx for local_idx, global_idx in enumerate(train_indices)}
+    
     return {
         'train_loader': train_loader,
         'test_loader': test_loader,
@@ -208,7 +212,8 @@ def setup_cloud_data(device):
         'train_dataset': cloud_train_ds,
         'criterion': criterion,
         'criterion_nored': criterion_nored,
-        'num_classes': len(full_cloud_data.classes)
+        'num_classes': len(full_cloud_data.classes),
+        'global_to_local_map': global_to_local_map  # For CLOUD dataset index mapping
     }
 
 
@@ -257,7 +262,8 @@ def get_il_map(task_name, data_config, device, checkpoint_dir):
 
 def run_training_experiment(
     algorithm, model, data_config, device, num_epochs, checkpoint_path=None,
-    mkl_k_ratio=2.0, rho_il_map=None, rho_selection_ratio=0.1
+    mkl_k_ratio=2.0, rho_il_map=None, rho_selection_ratio=0.1,
+    hasa_window_size=5, hasa_k_ratio=0.6
 ):
     """
     Main training loop with checkpointing.
@@ -297,22 +303,35 @@ def run_training_experiment(
 
     print(f"--- Starting Training: {algorithm} ---")
 
+    # Initialize HASA trainer if needed (persists across epochs)
+    hasa_trainer = None
+
     for epoch in range(start_epoch, num_epochs):
         # Select training function based on algorithm
-        if algorithm == 'uniform_sgd':
+        if algorithm == 'uniform_sgd' or algorithm == 'standard':
             train_loss, train_acc = train_standard_sgd(
                 model, train_loader, criterion, optimizer, device
             )
-        elif algorithm == 'mkl_sgd':
+        elif algorithm == 'mkl_sgd' or algorithm == 'mkl':
             train_loss, train_acc = train_min_k_loss(
                 model, train_loader, criterion_nored, optimizer, device, k_ratio=mkl_k_ratio
             )
-        elif algorithm == 'rho_loss':
+        elif algorithm == 'rho_loss' or algorithm == 'rho':
             if rho_il_map is None:
                 raise ValueError("rho_il_map must be provided for RHO-LOSS")
+            # Get index mapping if available (for CLOUD dataset)
+            global_to_local_map = data_config.get('global_to_local_map', None)
             train_loss, train_acc = train_rho_loss(
                 model, rho_il_map, train_loader, criterion_nored, optimizer,
-                device, selection_ratio=rho_selection_ratio
+                device, selection_ratio=rho_selection_ratio,
+                global_to_local_map=global_to_local_map
+            )
+        elif algorithm == 'hasa':
+            train_loss, train_acc, hasa_trainer = train_hasa(
+                model, train_loader, criterion_nored, optimizer, device,
+                hasa_trainer=hasa_trainer, window_size_T=hasa_window_size,
+                k_ratio=hasa_k_ratio, train_dataset=data_config['train_dataset'],
+                current_epoch=epoch
             )
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
@@ -353,6 +372,17 @@ def run_training_experiment(
                 print(f"  [New Best] Saved to {best_path}")
 
     print(f"--- Finished: {algorithm} ---")
+    
+    # Ensure we have at least some results
+    if len(train_losses) == 0:
+        print("Warning: No training results collected!")
+        return {
+            'train_loss': [0.0],
+            'train_acc': [0.0],
+            'val_loss': [0.0],
+            'val_acc': [0.0]
+        }
+    
     return {
         'train_loss': train_losses,
         'train_acc': train_accs,
@@ -367,24 +397,41 @@ def main():
                         choices=['cifar100', 'mnist', 'cloud'],
                         help='Dataset to use')
     parser.add_argument('--algorithm', type=str, required=True,
-                        choices=['uniform_sgd', 'mkl_sgd', 'rho_loss'],
+                        choices=['uniform_sgd', 'mkl_sgd', 'rho_loss', 'hasa', 
+                                'standard', 'mkl', 'rho'],
                         help='Training algorithm')
     parser.add_argument('--epochs', type=int, default=100,
                         help='Number of training epochs')
     parser.add_argument('--k_ratio', type=float, default=2.0,
                         help='k_ratio for MKL-SGD (default: 2.0)')
     parser.add_argument('--selection_ratio', type=float, default=0.1,
-                        help='Selection ratio for RHO-LOSS (default: 0.1)')
+                        help='Selection ratio for RHO-LOSS and HASA (default: 0.1)')
+    parser.add_argument('--window_size', type=int, default=5,
+                        help='Window size T for HASA (default: 5)')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints',
                         help='Directory for checkpoints')
     parser.add_argument('--resume', type=str, default=None,
                         help='Path to checkpoint to resume from')
+    parser.add_argument('--no_plot', action='store_true',
+                        help='Skip plotting (useful for debug runs)')
+    parser.add_argument('--plot_dir', type=str, default='./plots',
+                        help='Directory to save plots (if not set, displays interactively)')
+    parser.add_argument('--force_cpu', action='store_true',
+                        help='Force CPU mode (useful for debugging)')
     
     args = parser.parse_args()
     
     # Setup
-    device = setup_device()
+    if args.force_cpu:
+        device = torch.device("cpu")
+        print(f"Using device: {device} (forced CPU mode)")
+    else:
+        device = setup_device()
     os.makedirs(args.checkpoint_dir, exist_ok=True)
+    
+    # Create plots directory if plotting is enabled
+    if not args.no_plot:
+        os.makedirs(args.plot_dir, exist_ok=True)
     
     # Load data
     print(f"\n=== Setting up {args.task.upper()} dataset ===")
@@ -400,15 +447,25 @@ def main():
     
     # Get IL map for RHO-LOSS if needed
     rho_il_map = None
-    if args.algorithm == 'rho_loss':
+    if args.algorithm in ['rho_loss', 'rho']:
         rho_il_map = get_il_map(args.task, data_config, device, args.checkpoint_dir)
     
     # Setup checkpoint path
-    checkpoint_name = f"{args.task}_{args.algorithm}"
-    if args.algorithm == 'mkl_sgd':
+    algorithm_name = args.algorithm
+    if algorithm_name == 'standard':
+        algorithm_name = 'uniform_sgd'
+    elif algorithm_name == 'mkl':
+        algorithm_name = 'mkl_sgd'
+    elif algorithm_name == 'rho':
+        algorithm_name = 'rho_loss'
+    
+    checkpoint_name = f"{args.task}_{algorithm_name}"
+    if args.algorithm in ['mkl_sgd', 'mkl']:
         checkpoint_name += f"_k{args.k_ratio}"
-    elif args.algorithm == 'rho_loss':
+    elif args.algorithm in ['rho_loss', 'rho']:
         checkpoint_name += f"_sel{args.selection_ratio}"
+    elif args.algorithm == 'hasa':
+        checkpoint_name += f"_T{args.window_size}_k{args.selection_ratio}"
     checkpoint_path = os.path.join(args.checkpoint_dir, f"{checkpoint_name}.pth")
     
     if args.resume:
@@ -424,26 +481,49 @@ def main():
         checkpoint_path=checkpoint_path,
         mkl_k_ratio=args.k_ratio,
         rho_il_map=rho_il_map,
-        rho_selection_ratio=args.selection_ratio
+        rho_selection_ratio=args.selection_ratio,
+        hasa_window_size=args.window_size if args.algorithm == 'hasa' else 5,
+        hasa_k_ratio=args.selection_ratio if args.algorithm == 'hasa' else 0.6
     )
     
     # Print summary
     print("\n=== Training Summary ===")
-    print(f"Best Val Acc: {max(results['val_acc'])*100:.2f}%")
-    print(f"Final Val Acc: {results['val_acc'][-1]*100:.2f}%")
+    if results and 'val_acc' in results and len(results['val_acc']) > 0:
+        print(f"Best Val Acc: {max(results['val_acc'])*100:.2f}%")
+        print(f"Final Val Acc: {results['val_acc'][-1]*100:.2f}%")
+    else:
+        print("Warning: No validation results available")
     
-    # Plot results
-    plot_results_custom(
-        [results],
-        [args.algorithm],
-        title_prefix=f"{args.task.upper()} - {args.algorithm}"
-    )
+    # Plot results (skip if --no_plot flag is set)
+    if not args.no_plot:
+        try:
+            # Generate plot filename
+            plot_filename = f"{args.task}_{algorithm_name}"
+            if args.algorithm in ['mkl_sgd', 'mkl']:
+                plot_filename += f"_k{args.k_ratio}"
+            elif args.algorithm in ['rho_loss', 'rho']:
+                plot_filename += f"_sel{args.selection_ratio}"
+            elif args.algorithm == 'hasa':
+                plot_filename += f"_T{args.window_size}_k{args.selection_ratio}"
+            plot_path = os.path.join(args.plot_dir, f"{plot_filename}.png")
+            
+            plot_results_custom(
+                [results],
+                [args.algorithm],
+                title_prefix=f"{args.task.upper()} - {args.algorithm}",
+                save_path=plot_path
+            )
+        except Exception as e:
+            print(f"Warning: Plotting failed: {e}")
     
     # Create summary table
-    table = create_summary_table([results], [args.algorithm])
-    if table is not None:
-        print("\n=== Summary Table ===")
-        print(table)
+    try:
+        table = create_summary_table([results], [args.algorithm])
+        if table is not None:
+            print("\n=== Summary Table ===")
+            print(table)
+    except Exception as e:
+        print(f"Warning: Summary table creation failed: {e}")
 
 
 if __name__ == '__main__':

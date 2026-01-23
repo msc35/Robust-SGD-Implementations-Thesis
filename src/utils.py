@@ -9,6 +9,8 @@ This module provides:
 
 import torch
 import torch.nn as nn
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend for saving plots
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -54,7 +56,7 @@ def validate(model, test_loader, criterion, device):
     return epoch_loss, epoch_acc
 
 
-def plot_results_custom(all_results, algorithm_names, title_prefix=""):
+def plot_results_custom(all_results, algorithm_names, title_prefix="", save_path=None):
     """
     Plots the training/validation loss and accuracy for a list of experiments.
     
@@ -63,6 +65,7 @@ def plot_results_custom(all_results, algorithm_names, title_prefix=""):
                     {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
         algorithm_names: List of algorithm names (strings)
         title_prefix: Prefix for plot titles
+        save_path: Optional path to save the plot. If None, displays interactively.
     """
     if not all_results:
         print(f"Skipping plot '{title_prefix}': No results provided.")
@@ -106,7 +109,13 @@ def plot_results_custom(all_results, algorithm_names, title_prefix=""):
     ax2.grid(True)
     
     plt.tight_layout()
-    plt.show()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"Plot saved to: {save_path}")
+        plt.close()  # Close to free memory
+    else:
+        plt.show()  # Interactive display (pauses execution)
 
 
 def create_summary_table(all_results, algorithm_names):
