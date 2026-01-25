@@ -427,7 +427,7 @@ class HASATrainer:
         Args:
             num_samples: Total number of samples in the dataset
             window_size_T: Window size (number of epochs to track)
-            device: Device to store tensors on
+            device: Device for model training (history buffer uses CPU for stability)
         """
         self.num_samples = num_samples
         self.T = window_size_T
@@ -435,10 +435,11 @@ class HASATrainer:
         self.current_epoch = 0
         
         # History buffer: (num_samples, T) - FIFO queue
+        # Store on CPU for stability (MPS can crash with large indexing operations)
         # Each row stores the loss history for one sample
-        self.history_buffer = torch.zeros(num_samples, window_size_T, dtype=torch.float32, device=device)
+        self.history_buffer = torch.zeros(num_samples, window_size_T, dtype=torch.float32, device='cpu')
         # Track how many epochs of history we have for each sample
-        self.history_count = torch.zeros(num_samples, dtype=torch.long, device=device)
+        self.history_count = torch.zeros(num_samples, dtype=torch.long, device='cpu')
     
     def update_history(self, indices, losses):
         """
@@ -448,26 +449,37 @@ class HASATrainer:
             indices: Tensor of sample indices (shape: [batch_size])
             losses: Tensor of per-sample losses (shape: [batch_size])
         """
-        indices = indices.to(self.device)
-        losses = losses.detach().to(self.device)
+        # Convert to CPU for indexing operations (like notebook does)
+        indices_cpu = indices.cpu()
+        losses_cpu = losses.detach().cpu()
         
-        # For each sample, shift history left and append new loss
-        # Note: Using loop for correctness (samples may appear multiple times in epoch)
-        for i, idx in enumerate(indices):
-            idx = idx.item()
-            if idx >= self.num_samples:
-                continue  # Skip invalid indices
-            
-            # Shift history left (FIFO)
-            if self.history_count[idx] < self.T:
-                # Buffer not full yet, just append
-                pos = self.history_count[idx].item()
-                self.history_buffer[idx, pos] = losses[i]
-                self.history_count[idx] += 1
-            else:
-                # Buffer full, shift left and append
-                self.history_buffer[idx, :-1] = self.history_buffer[idx, 1:].clone()
-                self.history_buffer[idx, -1] = losses[i]
+        # Filter out invalid indices
+        valid_mask = (indices_cpu >= 0) & (indices_cpu < self.num_samples)
+        if not valid_mask.any():
+            return
+        
+        valid_indices = indices_cpu[valid_mask]
+        valid_losses = losses_cpu[valid_mask]
+        
+        # Process each unique index (handle duplicates by taking last occurrence)
+        unique_indices, inverse_indices = torch.unique(valid_indices, return_inverse=True)
+        # For duplicates, we want the last loss value
+        for i in range(len(unique_indices)):
+            mask = (inverse_indices == i)
+            if mask.any():
+                idx = unique_indices[i].item()
+                loss_val = valid_losses[mask][-1].item()  # Take last if duplicate, convert to Python float
+                
+                # Shift history left (FIFO)
+                if self.history_count[idx] < self.T:
+                    # Buffer not full yet, just append
+                    pos = self.history_count[idx].item()
+                    self.history_buffer[idx, pos] = loss_val
+                    self.history_count[idx] += 1
+                else:
+                    # Buffer full, shift left and append
+                    self.history_buffer[idx, :-1] = self.history_buffer[idx, 1:].clone()
+                    self.history_buffer[idx, -1] = loss_val
     
     def get_variance(self, indices):
         """
@@ -477,27 +489,44 @@ class HASATrainer:
             indices: Tensor of sample indices (shape: [batch_size])
             
         Returns:
-            Tensor of variances (shape: [batch_size])
+            Tensor of variances (shape: [batch_size]) on the same device as indices
         """
-        indices = indices.to(self.device)
-        variances = torch.zeros(len(indices), dtype=torch.float32, device=self.device)
+        # Convert to CPU for indexing (like notebook pattern)
+        indices_cpu = indices.cpu()
+        batch_size = len(indices_cpu)
+        variances_cpu = torch.full((batch_size,), float('inf'), dtype=torch.float32, device='cpu')
         
-        for i, idx in enumerate(indices):
-            idx = idx.item()
-            if idx >= self.num_samples:
-                variances[i] = float('inf')  # Invalid index -> high variance (will be filtered out)
-                continue
-            
-            count = self.history_count[idx].item()
-            if count < 2:
-                # Need at least 2 values to compute variance
-                variances[i] = float('inf')  # Not enough history -> high variance (will be filtered out)
-            else:
-                # Get valid history (only the filled portion)
-                history = self.history_buffer[idx, :count]
-                variances[i] = torch.var(history, unbiased=False)  # Use population variance
+        # Filter valid indices
+        valid_mask = (indices_cpu >= 0) & (indices_cpu < self.num_samples)
+        if not valid_mask.any():
+            return torch.tensor(variances_cpu, device=self.device)
         
-        return variances
+        valid_indices = indices_cpu[valid_mask]
+        valid_positions = torch.where(valid_mask)[0]
+        
+        # Get counts for valid indices
+        valid_counts = self.history_count[valid_indices]
+        
+        # Find indices with enough history (count >= 2)
+        enough_history_mask = valid_counts >= 2
+        if not enough_history_mask.any():
+            return torch.tensor(variances_cpu, device=self.device)
+        
+        # Process indices with enough history
+        process_indices = valid_indices[enough_history_mask]
+        process_positions = valid_positions[enough_history_mask]
+        process_counts = valid_counts[enough_history_mask]
+        
+        # Calculate variances
+        for i, (idx, pos, count) in enumerate(zip(process_indices, process_positions, process_counts)):
+            idx_val = idx.item()
+            count_val = count.item()
+            # Get valid history (only the filled portion)
+            history = self.history_buffer[idx_val, :count_val]
+            variances_cpu[pos] = torch.var(history, unbiased=False)
+        
+        # Return on the original device (like notebook: torch.tensor(..., device=device))
+        return torch.tensor(variances_cpu, device=self.device)
     
     def increment_epoch(self):
         """Increment the current epoch counter."""
@@ -531,18 +560,19 @@ def _inject_sgld_noise(model, learning_rate, noise_scale=None):
         return
     
     if noise_scale is None:
-        noise_std = torch.sqrt(torch.tensor(2.0 * learning_rate, device=device))
+        noise_std = torch.sqrt(torch.tensor(2.0 * learning_rate, device=device, dtype=torch.float32))
     else:
         # Convert noise_scale to tensor on correct device if it's a scalar
         if isinstance(noise_scale, (int, float)):
-            noise_std = torch.tensor(noise_scale, device=device)
+            noise_std = torch.tensor(noise_scale, device=device, dtype=torch.float32)
         else:
             noise_std = noise_scale.to(device) if hasattr(noise_scale, 'to') else noise_scale
     
     with torch.no_grad():
         for param in model.parameters():
             if param.requires_grad:
-                noise = torch.randn_like(param) * noise_std
+                # Generate noise and add
+                noise = torch.randn_like(param, dtype=param.dtype) * noise_std
                 param.data.add_(noise)
 
 
@@ -635,6 +665,10 @@ def train_hasa(model, train_loader, criterion_nored, optimizer, device,
         
         # Calculate per-sample loss
         per_sample_loss = criterion_nored(outputs, labels)
+        
+        # MPS memory management (periodic cache clearing)
+        if device.type == 'mps' and batch_idx % 50 == 0:
+            torch.mps.empty_cache()
         
         if is_warmup:
             # Phase A: Warm-Up - use all samples

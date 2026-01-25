@@ -97,6 +97,7 @@ def main():
     LONG_RUN_EPOCHS = 100
     
     # Base command (plots will be saved to ./plots directory automatically)
+    # Use MPS for speed (optimizations applied to prevent crashes)
     base_cmd = ["python", "main.py", "--plot_dir", "./plots"]
     
     # Experiment configurations - ALL 36 experiments

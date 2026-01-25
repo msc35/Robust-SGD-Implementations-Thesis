@@ -22,6 +22,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms, datasets
 import numpy as np
+from tqdm import tqdm
 
 from src.data_loader import (
     NoisyIndexedDataset, AddGaussianNoise, CloudMergedDataset, ApplyTransformSubset
@@ -42,23 +43,50 @@ DATA_ROOT = './data'
 CLOUD_ROOT = './data/task_2_clouds'
 
 
-def setup_device():
-    """Setup and return the appropriate device."""
+def setup_device(force_cpu=False, prefer_cpu=False):
+    """
+    Setup and return the appropriate device.
+    Tries MPS first (if available), but falls back to CPU if MPS is unstable.
+    
+    Args:
+        force_cpu: If True, always use CPU
+        prefer_cpu: If True, prefer CPU over MPS (for stability)
+    
+    Returns:
+        torch.device: The selected device
+    """
     seed = 42
     torch.manual_seed(seed)
     np.random.seed(seed)
     
-    if torch.cuda.is_available():
+    if force_cpu:
+        device = torch.device("cpu")
+        print(f"Using device: {device} (forced CPU mode)")
+    elif torch.cuda.is_available():
         device = torch.device("cuda")
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-    elif torch.backends.mps.is_available():
+        print(f"Using device: {device}")
+    elif torch.backends.mps.is_available() and not prefer_cpu:
+        # Try MPS, but test if it works (PyTorch 2.0.0 MPS can be unstable)
         device = torch.device("mps")
+        print(f"Attempting to use device: {device}")
+        # Quick test to see if MPS works
+        try:
+            test_tensor = torch.randn(10, device=device)
+            _ = test_tensor * 2  # Simple operation
+            del test_tensor
+            print(f"Using device: {device} (MPS test passed)")
+        except Exception as e:
+            print(f"MPS test failed: {e}")
+            print("Falling back to CPU for stability")
+            device = torch.device("cpu")
+            print(f"Using device: {device}")
     else:
         device = torch.device("cpu")
+        print(f"Using device: {device}")
     
-    print(f"Using device: {device}")
     return device
 
 
@@ -306,7 +334,14 @@ def run_training_experiment(
     # Initialize HASA trainer if needed (persists across epochs)
     hasa_trainer = None
 
-    for epoch in range(start_epoch, num_epochs):
+    # Create progress bar for epochs
+    epoch_pbar = tqdm(range(start_epoch, num_epochs), 
+                     desc=f"Training {algorithm}",
+                     unit="epoch",
+                     initial=start_epoch,
+                     total=num_epochs)
+
+    for epoch in epoch_pbar:
         # Select training function based on algorithm
         if algorithm == 'uniform_sgd' or algorithm == 'standard':
             train_loss, train_acc = train_standard_sgd(
@@ -345,9 +380,20 @@ def run_training_experiment(
         val_losses.append(val_loss)
         val_accs.append(val_acc)
 
-        print(f"Epoch {epoch+1}/{num_epochs} | "
-              f"Tr Loss: {train_loss:.4f} Acc: {train_acc:.4f} | "
-              f"Val Loss: {val_loss:.4f} Acc: {val_acc:.4f}")
+        # Update progress bar with current metrics
+        epoch_pbar.set_postfix({
+            'Epoch': f'{epoch+1}/{num_epochs}',
+            'Tr Loss': f'{train_loss:.4f}',
+            'Tr Acc': f'{train_acc*100:.2f}%',
+            'Val Loss': f'{val_loss:.4f}',
+            'Val Acc': f'{val_acc*100:.2f}%',
+            'Best Val Acc': f'{best_val_acc*100:.2f}%'
+        })
+
+        # Also print to console for logging
+        print(f"\nEpoch {epoch+1}/{num_epochs} | "
+              f"Tr Loss: {train_loss:.4f} Acc: {train_acc*100:.2f}% | "
+              f"Val Loss: {val_loss:.4f} Acc: {val_acc*100:.2f}%")
 
         # Checkpoint
         is_best = val_acc > best_val_acc
@@ -370,6 +416,8 @@ def run_training_experiment(
                 best_path = checkpoint_path.replace('.pth', '_best.pth')
                 torch.save(state, best_path)
                 print(f"  [New Best] Saved to {best_path}")
+    
+    epoch_pbar.close()
 
     print(f"--- Finished: {algorithm} ---")
     
@@ -418,15 +466,13 @@ def main():
                         help='Directory to save plots (if not set, displays interactively)')
     parser.add_argument('--force_cpu', action='store_true',
                         help='Force CPU mode (useful for debugging)')
+    parser.add_argument('--prefer_cpu', action='store_true',
+                        help='Prefer CPU over MPS for stability (recommended for long runs)')
     
     args = parser.parse_args()
     
-    # Setup
-    if args.force_cpu:
-        device = torch.device("cpu")
-        print(f"Using device: {device} (forced CPU mode)")
-    else:
-        device = setup_device()
+    # Setup device with stability options
+    device = setup_device(force_cpu=args.force_cpu, prefer_cpu=args.prefer_cpu)
     os.makedirs(args.checkpoint_dir, exist_ok=True)
     
     # Create plots directory if plotting is enabled
