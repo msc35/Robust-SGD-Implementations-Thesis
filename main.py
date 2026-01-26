@@ -291,7 +291,7 @@ def get_il_map(task_name, data_config, device, checkpoint_dir):
 def run_training_experiment(
     algorithm, model, data_config, device, num_epochs, checkpoint_path=None,
     mkl_k_ratio=2.0, rho_il_map=None, rho_selection_ratio=0.1,
-    hasa_window_size=5, hasa_k_ratio=0.6
+    hasa_window_size=5, hasa_k_ratio=0.6, hasa_noise_scale=0.0001
 ):
     """
     Main training loop with checkpointing.
@@ -365,7 +365,8 @@ def run_training_experiment(
             train_loss, train_acc, hasa_trainer = train_hasa(
                 model, train_loader, criterion_nored, optimizer, device,
                 hasa_trainer=hasa_trainer, window_size_T=hasa_window_size,
-                k_ratio=hasa_k_ratio, train_dataset=data_config['train_dataset'],
+                k_ratio=hasa_k_ratio, noise_scale=hasa_noise_scale,
+                train_dataset=data_config['train_dataset'],
                 current_epoch=epoch
             )
         else:
@@ -456,6 +457,8 @@ def main():
                         help='Selection ratio for RHO-LOSS and HASA (default: 0.1)')
     parser.add_argument('--window_size', type=int, default=5,
                         help='Window size T for HASA (default: 5)')
+    parser.add_argument('--noise_scale', type=float, default=0.0001,
+                        help='SGLD noise scale for HASA (default: 0.0001, safe for ResNet weights)')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints',
                         help='Directory for checkpoints')
     parser.add_argument('--resume', type=str, default=None,
@@ -511,7 +514,7 @@ def main():
     elif args.algorithm in ['rho_loss', 'rho']:
         checkpoint_name += f"_sel{args.selection_ratio}"
     elif args.algorithm == 'hasa':
-        checkpoint_name += f"_T{args.window_size}_k{args.selection_ratio}"
+        checkpoint_name += f"_T{args.window_size}_k{args.selection_ratio}_ns{args.noise_scale}"
     checkpoint_path = os.path.join(args.checkpoint_dir, f"{checkpoint_name}.pth")
     
     if args.resume:
@@ -529,7 +532,8 @@ def main():
         rho_il_map=rho_il_map,
         rho_selection_ratio=args.selection_ratio,
         hasa_window_size=args.window_size if args.algorithm == 'hasa' else 5,
-        hasa_k_ratio=args.selection_ratio if args.algorithm == 'hasa' else 0.6
+        hasa_k_ratio=args.selection_ratio if args.algorithm == 'hasa' else 0.6,
+        hasa_noise_scale=args.noise_scale if args.algorithm == 'hasa' else 0.0001
     )
     
     # Print summary
@@ -550,7 +554,7 @@ def main():
             elif args.algorithm in ['rho_loss', 'rho']:
                 plot_filename += f"_sel{args.selection_ratio}"
             elif args.algorithm == 'hasa':
-                plot_filename += f"_T{args.window_size}_k{args.selection_ratio}"
+                plot_filename += f"_T{args.window_size}_k{args.selection_ratio}_ns{args.noise_scale}"
             plot_path = os.path.join(args.plot_dir, f"{plot_filename}.png")
             
             plot_results_custom(
