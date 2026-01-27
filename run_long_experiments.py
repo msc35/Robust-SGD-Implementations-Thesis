@@ -100,7 +100,7 @@ def main():
     # Use MPS for speed (optimizations applied to prevent crashes)
     base_cmd = ["python", "main.py", "--plot_dir", "./plots"]
     
-    # Experiment configurations - ALL 36 experiments
+    # Experiment configurations - Original 36 + 24 HASA fine-tuning = 60 total experiments
     experiments = []
     
     # ===== Group 1: CIFAR-100 (40% Label Noise) =====
@@ -123,6 +123,23 @@ def main():
          "CIFAR-100 - HASA (T=10, k=0.6)"),
         (base_cifar + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.7"], 
          "CIFAR-100 - HASA (T=10, k=0.7)"),
+        # CIFAR-100 HASA Fine-tuning (noise_scale=1e-4)
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.5", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=5, k=0.5, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.7", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=5, k=0.7, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.8", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=5, k=0.8, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.9", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=5, k=0.9, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.5", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=10, k=0.5, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.7", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=10, k=0.7, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.8", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=10, k=0.8, ns=1e-4)"),
+        (base_cifar + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.9", "--noise_scale", "1e-4"], 
+         "CIFAR-100 - HASA (T=10, k=0.9, ns=1e-4)"),
     ])
     
     # ===== Group 2: MNIST (Input Noise std=1.5) =====
@@ -145,6 +162,23 @@ def main():
          "MNIST - HASA (T=10, k=0.6)"),
         (base_mnist + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.7"], 
          "MNIST - HASA (T=10, k=0.7)"),
+        # MNIST HASA Fine-tuning (noise_scale=1e-4)
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.5", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=5, k=0.5, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.7", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=5, k=0.7, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.8", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=5, k=0.8, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.9", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=5, k=0.9, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.5", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=10, k=0.5, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.7", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=10, k=0.7, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.8", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=10, k=0.8, ns=1e-4)"),
+        (base_mnist + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.9", "--noise_scale", "1e-4"], 
+         "MNIST - HASA (T=10, k=0.9, ns=1e-4)"),
     ])
     
     # ===== Group 3: CLOUD (Input Noise std=1.0) =====
@@ -167,6 +201,23 @@ def main():
          "CLOUD - HASA (T=10, k=0.6)"),
         (base_cloud + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.7"], 
          "CLOUD - HASA (T=10, k=0.7)"),
+        # CLOUD HASA Fine-tuning (noise_scale=1e-4)
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.5", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=5, k=0.5, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.7", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=5, k=0.7, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.8", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=5, k=0.8, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "5", "--selection_ratio", "0.9", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=5, k=0.9, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.5", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=10, k=0.5, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.7", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=10, k=0.7, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.8", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=10, k=0.8, ns=1e-4)"),
+        (base_cloud + ["--algorithm", "hasa", "--window_size", "10", "--selection_ratio", "0.9", "--noise_scale", "1e-4"], 
+         "CLOUD - HASA (T=10, k=0.9, ns=1e-4)"),
     ])
     
     # Create plots directory
