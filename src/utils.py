@@ -169,17 +169,20 @@ def create_summary_table(all_results, algorithm_names):
     }).highlight_max(subset=['Best Val Acc (%)'], color='lightgreen')
 
 
-def plot_task_history(results_dict, task_title):
+def plot_task_history(results_dict, task_title, save_path=None):
     """
     Plots Train/Val Loss and Accuracy for a single task.
-    
+
     Args:
         results_dict: dict { 'AlgoName': {'train_loss':[], ...}, ... }
         task_title: str
+        save_path: Optional path to save the plot. If None, displays interactively.
     """
+    if not results_dict:
+        return
     # Create subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 7))
-    
+
     # Color palette to ensure distinct lines
     colors = plt.cm.tab10(np.linspace(0, 1, len(results_dict)))
 
@@ -187,7 +190,7 @@ def plot_task_history(results_dict, task_title):
         if not metrics.get('val_loss'):
             continue
         epochs = range(1, len(metrics['val_loss']) + 1)
-        
+
         # --- Plot 1: Validation Loss ---
         ax1.plot(epochs, metrics['val_loss'], label=name, linewidth=2.5, color=color)
 
@@ -210,5 +213,9 @@ def plot_task_history(results_dict, task_title):
     ax2.grid(True)
 
     plt.tight_layout()
-    plt.show()
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        plt.close()
+    else:
+        plt.show()
 
