@@ -1,230 +1,200 @@
-# Robust SGD Implementation - Benchmarking Suite
+# Robust SGD Implementations — Thesis Benchmarking Suite
 
-This repository contains a clean, modular implementation of robust stochastic gradient descent (SGD) algorithms for benchmarking on noisy datasets.
+A modular implementation of robust stochastic gradient descent (SGD) algorithms for benchmarking on noisy datasets. Supports **Standard SGD**, **Min-k Loss SGD (MKL-SGD)**, **RHO-LOSS**, and **HASA (History-Aware Sampling Algorithm)** on CIFAR-100, MNIST, and a cloud classification dataset.
 
 ## Overview
 
-This benchmarking suite compares three training algorithms on datasets with known noise:
+This suite compares four training algorithms on datasets with known noise:
 
-1. **Standard SGD (Baseline)**: Uniform random sampling from the training set
-2. **Min-k Loss SGD (MKL-SGD)**: Selects samples with the lowest loss
-3. **RHO-LOSS**: Selects samples with the highest reducible loss (current loss - irreducible loss)
+1. **Standard SGD (Baseline)** — Uniform random sampling; no sample selection.
+2. **Min-k Loss SGD (MKL-SGD)** — Selects samples with the lowest loss per batch.
+3. **RHO-LOSS** — Selects samples by highest reducible loss (current loss − irreducible loss).
+4. **HASA (History-Aware Sampling Algorithm)** — Bayesian-inspired selection using loss-history variance and SGLD noise.
 
-## Datasets and Noise Types
+## Datasets and Noise
 
-The benchmark includes three tasks with different noise characteristics:
-
-### Task 1: CIFAR-100 (Label Noise)
-- **Dataset**: CIFAR-100
-- **Noise Type**: 40% symmetric label noise
-- **Model**: VGG-Small CNN
-- **Architecture**: 3 conv layers + 2 FC layers
-
-### Task 2: MNIST (Input Noise)
-- **Dataset**: MNIST
-- **Noise Type**: Gaussian input noise with std=1.5
-- **Model**: Simple CNN (2 conv layers + 2 FC layers)
-- **Architecture**: 32→64 channels, 128 hidden units
-
-### Task 3: CLOUD (Input Noise)
-- **Dataset**: Cloud classification dataset
-- **Noise Type**: Gaussian input noise with std=1.0
-- **Model**: ResNet-18 (ImageNet pretrained)
-- **Architecture**: Standard ResNet-18 with custom classifier
+| Task   | Dataset   | Noise                         | Model        |
+|--------|-----------|-------------------------------|--------------|
+| CIFAR-100 | CIFAR-100 | 40% symmetric label noise     | VGG-Small    |
+| MNIST  | MNIST     | Gaussian input noise (std=1.5)| Simple CNN   |
+| CLOUD  | Cloud     | Gaussian input noise (std=1.0)| ResNet-18    |
 
 ## Algorithms
 
-### 1. Standard SGD (`uniform_sgd`)
+### 1. Standard SGD (`standard` / `uniform_sgd`)
 
-The baseline algorithm that samples uniformly at random from the training dataset. This is the standard, non-robust training procedure.
+Baseline: uniform sampling, standard gradient updates. No selection or filtering.
 
-**Key Features:**
-- Uniform random sampling (handled by DataLoader shuffling)
-- Standard gradient descent update
-- No sample selection or filtering
+### 2. Min-k Loss SGD (`mkl` / `mkl_sgd`)
 
-### 2. Min-k Loss SGD (`mkl_sgd`)
+- **Idea**: Keep the `b/k` samples with **lowest** loss in each batch; update on their mean loss.
+- **Hyperparameter**: `--k_ratio` (e.g. 1.25, 1.5, 2.0).
 
-Based on the paper: **"Choosing the Sample with Lowest Loss makes SGD Robust"**
+### 3. RHO-LOSS (`rho` / `rho_loss`)
 
-**Algorithm:**
-1. Load a mini-batch of size `b`
-2. Calculate per-sample loss for all `b` samples
-3. Select the `m = b/k` samples with the **lowest** loss
-4. Perform gradient update using the mean loss of these `m` selected samples
+- **Idea**: Precompute an *irreducible loss* (IL) map; select samples with **highest** reducible loss (current − IL).
+- **Hyperparameter**: `--selection_ratio` (e.g. 0.1–0.4).
+- IL map is cached in the checkpoint directory; RHO runs need that one-time precomputation.
 
-**Key Insight**: Noisy samples or outliers will often have a high loss, so selecting low-loss samples filters out noise.
+### 4. HASA (`hasa`)
 
-**Hyperparameters:**
-- `k_ratio`: Denominator for sample selection (default: 2.0, meaning b/2 samples are selected)
-- Common values: 1.25, 1.5, 2.0
+- **Idea**: History-aware selection: track per-sample loss over a window T; select low-variance (stable) samples; inject SGLD noise.
+- **Hyperparameters**: `--window_size` (T), `--selection_ratio` (k), `--noise_scale` (SGLD).
 
-### 3. RHO-LOSS (`rho_loss`)
-
-Based on the paper: **"Prioritized Training on Points that are learnable, Worth Learning, and Not Yet Learnt"**
-
-**Algorithm (Two-Phase):**
-
-**Phase 1: Pre-computation (Done Once)**
-1. A holdout set `D_ho` is set aside (10% of data)
-2. An **Irreducible Loss (IL) Model** is trained only on this holdout set
-3. Perform a single forward pass of the entire training dataset through the frozen IL Model
-4. Store the loss for each training sample as the **Irreducible Loss (IL)**
-   - This represents the "unlearnable" part of the sample (e.g., noise)
-
-**Phase 2: Main Training Loop**
-1. At each step, load a large candidate batch `B_t` (size `n_B`)
-2. Calculate current training loss: `L[y_i|x_i; D_t]`
-3. Compute **RHO-LOSS score**: `RHO-LOSS[i] = Current_Loss[i] - IL[i]`
-4. Select the `n_b` samples with the **highest** RHO-LOSS scores
-5. Perform gradient update using the mean of the **current loss** (not RHO-LOSS) of selected samples
-
-**Key Insight**: RHO-LOSS selects samples that are:
-- **Learnable** (not noisy): Low IL means the sample is learnable
-- **Worth learning** (not outliers): High current loss means it's important
-- **Not yet learnt** (not redundant): High reducible loss means there's room to learn
-
-**Hyperparameters:**
-- `selection_ratio`: Ratio of samples to select (n_b / n_B), e.g., 0.1 for 10%
-- Common values: 0.1, 0.2, 0.3, 0.4
+---
 
 ## Installation
 
-1. Clone the repository:
+**Requirements:** Python 3.9+ (tested with 3.9–3.11), pip.
+
 ```bash
 git clone <repository-url>
-cd Robust-SGD-Implementation-Thesis
-```
-
-2. Install dependencies:
-```bash
+cd Robust-SGD-Implementations-Thesis
 pip install -r requirements.txt
 ```
 
-3. Ensure datasets are available:
-- **CIFAR-100**: Will be automatically downloaded on first run
-- **MNIST**: Will be automatically downloaded on first run
-- **CLOUD**: Should be placed in `./data/task_2_clouds/` with `clouds_train/` and `clouds_test/` subdirectories
+**Datasets:**
 
-## Usage
+- **CIFAR-100** and **MNIST**: Downloaded automatically on first run.
+- **CLOUD**: Place data under `./data/` with the expected structure (e.g. `task_2_clouds/` with train/test splits). See `src/data_loader.py` for expected paths.
 
-### Basic Usage
+**Device:** The code uses CUDA if available, else MPS (Apple Silicon), else CPU. No code changes required.
 
-Run a single experiment:
+---
 
-```bash
-# Standard SGD on CIFAR-100
-python main.py --task cifar100 --algorithm uniform_sgd --epochs 100
+## How to Run
 
-# MKL-SGD on MNIST with k_ratio=2.0
-python main.py --task mnist --algorithm mkl_sgd --k_ratio 2.0 --epochs 100
-
-# RHO-LOSS on CLOUD with selection_ratio=0.1
-python main.py --task cloud --algorithm rho_loss --selection_ratio 0.1 --epochs 100
-```
-
-### Command-Line Arguments
-
-```
---task: Dataset to use (cifar100, mnist, cloud)
---algorithm: Training algorithm (uniform_sgd, mkl_sgd, rho_loss)
---epochs: Number of training epochs (default: 100)
---k_ratio: k_ratio for MKL-SGD (default: 2.0)
---selection_ratio: Selection ratio for RHO-LOSS (default: 0.1)
---checkpoint_dir: Directory for checkpoints (default: ./checkpoints)
---resume: Path to checkpoint to resume from (optional)
-```
-
-### Example: Running Full Benchmark Suite
-
-To reproduce the full benchmark suite from the notebook:
+### Single experiment (`main.py`)
 
 ```bash
-# CIFAR-100 experiments
-python main.py --task cifar100 --algorithm uniform_sgd --epochs 100
-python main.py --task cifar100 --algorithm mkl_sgd --k_ratio 2.0 --epochs 100
-python main.py --task cifar100 --algorithm mkl_sgd --k_ratio 1.5 --epochs 100
-python main.py --task cifar100 --algorithm mkl_sgd --k_ratio 1.25 --epochs 100
-python main.py --task cifar100 --algorithm rho_loss --selection_ratio 0.2 --epochs 100
-python main.py --task cifar100 --algorithm rho_loss --selection_ratio 0.3 --epochs 100
-python main.py --task cifar100 --algorithm rho_loss --selection_ratio 0.4 --epochs 100
+# Standard SGD on CIFAR-100 (100 epochs)
+python main.py --task cifar100 --algorithm standard --epochs 100
 
-# MNIST experiments (similar pattern)
-# CLOUD experiments (similar pattern)
+# MKL-SGD on MNIST
+python main.py --task mnist --algorithm mkl --k_ratio 2.0 --epochs 100
+
+# RHO-LOSS on CLOUD
+python main.py --task cloud --algorithm rho --selection_ratio 0.1 --epochs 100
+
+# HASA on CIFAR-100 (T=10, k=0.7)
+python main.py --task cifar100 --algorithm hasa --window_size 10 --selection_ratio 0.7 --epochs 100
 ```
 
-## Project Structure
+**Main CLI arguments:**
+
+| Argument            | Description                                      | Default   |
+|---------------------|--------------------------------------------------|-----------|
+| `--task`            | Dataset: `cifar100`, `mnist`, `cloud`            | required  |
+| `--algorithm`       | `standard`, `mkl`, `rho`, `hasa` (or long names)| required  |
+| `--epochs`          | Number of epochs                                 | 100       |
+| `--k_ratio`         | MKL-SGD: keep batch/k samples                   | 2.0       |
+| `--selection_ratio` | RHO / HASA: selection ratio                      | 0.1       |
+| `--window_size`     | HASA: history window T                          | 5         |
+| `--noise_scale`     | HASA: SGLD noise scale                          | 0.0001    |
+| `--checkpoint_dir`  | Where to save/load checkpoints                  | `./checkpoints` |
+| `--plot_dir`        | Where to save plots                             | `./plots` |
+| `--resume`          | Path to checkpoint to resume                    | —         |
+| `--no_plot`         | Skip saving plots                               | off       |
+| `--force_cpu`      | Use CPU only                                    | off       |
+| `--prefer_cpu`      | Prefer CPU over MPS                             | off       |
+
+Training resumes automatically if a checkpoint exists at the path implied by task + algorithm + hyperparameters. Best model (by validation accuracy) is saved as `*_best.pth`.
+
+---
+
+## Scripts (no functional code changes)
+
+### Debug suite — quick sanity check
+
+Runs **one config per algorithm per dataset** (12 runs) with **5 epochs** to verify the pipeline:
+
+```bash
+python run_debug_suite.py
+```
+
+Uses `main.py` with `--epochs 5`; plots can be disabled inside the script if needed. Output is printed in real time.
+
+### Long-run experiments — full benchmark
+
+Runs **all benchmark configs** (36 base + 24 HASA fine-tuning = 60 experiments) with **100 epochs** each, saving plots to `./plots`:
+
+```bash
+python run_long_experiments.py
+```
+
+Configs live in the script (CIFAR-100, MNIST, CLOUD × Standard, MKL, RHO, HASA with various hyperparameters). Checkpoints go to `./checkpoints`.
+
+### Continue training — extend to 150 epochs
+
+Extends **selected CIFAR and CLOUD configs** to **150 epochs**, resuming from existing checkpoints when present:
+
+```bash
+python continue_training.py
+# Or: python continue_training.py --epochs 150 --checkpoint_dir ./checkpoints --plot_dir ./plots
+```
+
+Included configs: CIFAR-100 Normal SGD, HASA (T=10,k=0.9), HASA (T=10,k=0.8), HASA (T=15,k=0.8), RHO (sel=0.4), MKL (k=1.5); CLOUD HASA (T=15,k=0.7). If only a `*_best.pth` exists, the script copies it to the base checkpoint name so `main.py` can resume.
+
+### Plot and compare results — no training
+
+Loads **only checkpoints** from `./checkpoints` and builds comparison plots and tables (no training):
+
+```bash
+python plot_all_results_and_compare.py
+# Or: python plot_all_results_and_compare.py --checkpoint_dir ./checkpoints --out_dir ./plots
+```
+
+Produces per-task “best algorithms” plots, per-task summary CSVs, and an overview table + bar chart. Requires existing checkpoints.
+
+---
+
+## Project structure
 
 ```
-Robust-SGD-Implementation-Thesis/
+Robust-SGD-Implementations-Thesis/
+├── main.py                      # Single-experiment entry point (argparse)
+├── run_debug_suite.py           # 12 short runs (5 epochs) for debugging
+├── run_long_experiments.py      # 60 full runs (100 epochs)
+├── continue_training.py        # Extend selected runs to 150 epochs
+├── plot_all_results_and_compare.py  # Load checkpoints, plot and compare
+├── requirements.txt
+├── README.md
 ├── src/
-│   ├── data_loader.py      # Dataset classes and noise injection
-│   ├── models.py            # Neural network architectures
-│   ├── trainers.py          # Training algorithms (SGD, MKL-SGD, RHO-LOSS)
-│   └── utils.py             # Validation and plotting utilities
-├── main.py                  # Main script with argparse
-├── requirements.txt         # Python dependencies
-├── README.md                # This file
+│   ├── data_loader.py          # Datasets, noise, loaders
+│   ├── models.py                # VGG_Small, MNIST_CNN, Cloud_ResNet18
+│   ├── trainers.py              # Standard, MKL, RHO, HASA training loops
+│   └── utils.py                 # Validation, plotting, summary tables
 ├── notebooks/
-│   └── Benchmark_Algorithms.ipynb  # Original notebook (unchanged)
-├── data/                    # Dataset storage
+│   └── Benchmark_Algorithms.ipynb
+├── checkpoints/                 # Saved .pth and IL data (git-ignored in practice)
+├── plots/                       # Output plots and CSVs
+└── data/                        # Datasets (CIFAR, MNIST, CLOUD)
 ```
 
-## Key Differences: MKL-SGD vs RHO-LOSS
+---
 
-### MKL-SGD
-- **Selection Criterion**: Samples with **lowest** current loss
-- **Rationale**: Easy samples are more reliable, noisy samples have high loss
-- **Computation**: Single forward pass, simple sorting
-- **Hyperparameter**: `k_ratio` (how many samples to keep: b/k)
+## Reproducibility
 
-### RHO-LOSS
-- **Selection Criterion**: Samples with **highest** reducible loss (current - irreducible)
-- **Rationale**: Balances learnability (low IL) with importance (high current loss)
-- **Computation**: Requires pre-computation of IL map (one-time cost)
-- **Hyperparameter**: `selection_ratio` (percentage of batch to keep)
+- **Environment:** Use a virtual environment and install with `pip install -r requirements.txt`. Tested with Python 3.9–3.11 and PyTorch 2.x (MPS works with recent PyTorch).
+- **Seeds:** Not explicitly set in the scripts; for exact reproducibility you would set `torch.manual_seed`, `numpy.random.seed`, and (if used) `random.seed` before training.
+- **Order of runs:** Results depend on the order of experiments only if you reuse the same checkpoint path; each run is deterministic for a given seed and data.
+- **Data:** CIFAR-100 and MNIST are standard splits; CLOUD layout must match what `data_loader.py` expects.
 
-## Hyperparameters
+---
 
-All hyperparameters match the original notebook implementation:
+## Checkpointing and resuming
 
-- **Learning Rate**: 0.001 (Adam optimizer)
-- **Batch Size**: 32 (training), 256 (validation)
-- **Epochs**: 100 (default)
-- **CIFAR-100 Label Noise**: 40% symmetric
-- **MNIST Input Noise**: Gaussian std=1.5
-- **CLOUD Input Noise**: Gaussian std=1.0
+- Checkpoints are saved every epoch at `{checkpoint_dir}/{task}_{algorithm_suffix}.pth`.
+- Best model (by validation accuracy) is also saved as `*_best.pth`.
+- To resume, run the **same** `--task`, `--algorithm`, and hyperparameters; the script will load the checkpoint and continue from the next epoch. You can also pass `--resume /path/to/checkpoint.pth` to force a path.
+- RHO-LOSS uses a precomputed IL map (stored in the checkpoint dir); it is reused across runs for the same task.
 
-## Checkpointing
-
-The code supports automatic checkpointing:
-- Checkpoints are saved after each epoch
-- Best model (highest validation accuracy) is saved separately
-- Training can be resumed using `--resume <checkpoint_path>`
-- IL maps for RHO-LOSS are cached in the checkpoint directory
-
-## Results Visualization
-
-The script automatically generates:
-1. **Training curves**: Loss and accuracy plots
-2. **Summary table**: Best validation accuracy, final metrics
-
-For more detailed analysis, use the plotting functions in `src/utils.py`:
-- `plot_results_custom()`: Plot training curves
-- `create_summary_table()`: Generate comparison tables
-
-## Notes
-
-- The original notebook (`notebooks/Benchmark_Algorithms.ipynb`) is preserved and unchanged
-- All hyperparameters and model architectures match the notebook exactly
-- The code cannot be re-run without the source data, but the logic is preserved exactly as implemented
-- RHO-LOSS requires pre-computation of the Irreducible Loss map (done automatically on first run)
+---
 
 ## Citation
 
-If you use this code, please cite the original papers:
+If you use this code, please cite the relevant work:
 
-MKL-SGD: Shah, V., Wu, X., & Sanghavi, S. (2020). Choosing the Sample with Lowest Loss makes SGD Robust. Proceedings of the 23rd International Conference on Artificial Intelligence and Statistics (AISTATS). 
-
-RHO-LOSS: Mindermann, S., et al. (2022). Prioritized Training on Points that are Learnable, Worth Learning, and Not Yet Learnt. Proceedings of the 39th International Conference on Machine Learning (ICML). "
-
+- **MKL-SGD:** Shah, V., Wu, X., & Sanghavi, S. (2020). *Choosing the Sample with Lowest Loss makes SGD Robust.* AISTATS.
+- **RHO-LOSS:** Mindermann, S., et al. (2022). *Prioritized Training on Points that are Learnable, Worth Learning, and Not Yet Learnt.* ICML.
+- **HASA / SGLD:** Welling & Teh (2011); Mandt et al. (2017) for Bayesian interpretation of SGD noise and posterior sampling.
