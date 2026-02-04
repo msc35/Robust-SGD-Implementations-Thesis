@@ -82,7 +82,7 @@ def train_standard_sgd(model, train_loader, criterion, optimizer, device):
     return epoch_loss, epoch_acc
 
 
-def train_min_k_loss(model, train_loader, criterion_nored, optimizer, device, k_ratio=2.0):
+def train_min_k_loss(model, train_loader, criterion_nored, optimizer, device, k_ratio=2.0, return_selected_indices=False):
     """
     Training loop for one epoch using Min-k Loss SGD (MKL-SGD).
     
@@ -115,6 +115,7 @@ def train_min_k_loss(model, train_loader, criterion_nored, optimizer, device, k_
     correct_samples = 0
     total_samples = 0
     total_selected_samples = 0
+    selected_indices_list = [] if return_selected_indices else None
 
     for batch in train_loader:
         # Handle both (inputs, labels) and (inputs, labels, idx) formats
@@ -140,6 +141,13 @@ def train_min_k_loss(model, train_loader, criterion_nored, optimizer, device, k_
         # 4. Select the m = b/k samples with the LOWEST loss
         sorted_loss, sorted_indices = torch.sort(per_sample_loss)
         selected_loss = sorted_loss[:num_to_select]
+        if return_selected_indices and len(batch) >= 3:
+            idx_tensor = batch[2]
+            if torch.is_tensor(idx_tensor):
+                global_sel = idx_tensor[sorted_indices[:num_to_select].to(idx_tensor.device)].cpu().numpy()
+            else:
+                global_sel = np.array(idx_tensor)[sorted_indices[:num_to_select].cpu().numpy()]
+            selected_indices_list.append(global_sel)
 
         # 5. Calculate the mean loss *only* for the selected samples
         mean_selected_loss = selected_loss.mean()
@@ -164,6 +172,9 @@ def train_min_k_loss(model, train_loader, criterion_nored, optimizer, device, k_
     # Average accuracy over *all* processed samples
     epoch_acc = correct_samples / total_samples
 
+    if return_selected_indices and selected_indices_list:
+        all_selected = np.unique(np.concatenate(selected_indices_list))
+        return epoch_loss, epoch_acc, all_selected
     return epoch_loss, epoch_acc
 
 
@@ -296,7 +307,7 @@ def train_il_model(il_model, holdout_loader, test_loader, device, num_epochs=50)
     return il_model
 
 
-def train_rho_loss(model, il_loss_map, train_loader, criterion_nored, optimizer, device, selection_ratio=0.1, global_to_local_map=None):
+def train_rho_loss(model, il_loss_map, train_loader, criterion_nored, optimizer, device, selection_ratio=0.1, global_to_local_map=None, return_selected_indices=False):
     """
     Training loop for one epoch using RHO-LOSS selection.
     
@@ -338,6 +349,7 @@ def train_rho_loss(model, il_loss_map, train_loader, criterion_nored, optimizer,
     correct_samples = 0
     total_samples = 0
     total_selected_samples = 0
+    selected_indices_list = [] if return_selected_indices else None
 
     # Convert IL map to a tensor on the correct device for fast lookup
     il_loss_map_tensor = torch.tensor(il_loss_map, dtype=torch.float32).to(device)
@@ -383,6 +395,13 @@ def train_rho_loss(model, il_loss_map, train_loader, criterion_nored, optimizer,
         # 6. Select the top-nb samples with the *highest* RHO-LOSS score
         # We get the indices *within the batch* of the top samples
         _, top_batch_indices = torch.topk(rho_loss_per_sample, num_to_select_nb)
+        if return_selected_indices:
+            idx_tensor = batch[2]
+            if torch.is_tensor(idx_tensor):
+                global_sel = idx_tensor[top_batch_indices.to(idx_tensor.device)].cpu().numpy()
+            else:
+                global_sel = np.array(idx_tensor)[top_batch_indices.cpu().numpy()]
+            selected_indices_list.append(global_sel)
 
         # 7. Get the *current loss* (not RHO-LOSS) for the selected samples
         # The gradient is computed on the actual loss of the selected samples
@@ -406,6 +425,9 @@ def train_rho_loss(model, il_loss_map, train_loader, criterion_nored, optimizer,
     epoch_loss = running_selected_loss / total_selected_samples
     epoch_acc = correct_samples / total_samples
 
+    if return_selected_indices and selected_indices_list:
+        all_selected = np.unique(np.concatenate(selected_indices_list))
+        return epoch_loss, epoch_acc, all_selected
     return epoch_loss, epoch_acc
 
 
@@ -578,7 +600,7 @@ def _inject_sgld_noise(model, learning_rate, noise_scale=None):
 
 def train_hasa(model, train_loader, criterion_nored, optimizer, device, 
                 hasa_trainer=None, window_size_T=5, k_ratio=0.6, noise_scale=None, 
-                train_dataset=None, current_epoch=0):
+                train_dataset=None, current_epoch=0, return_selected_indices=False):
     """
     Training loop for one epoch using HASA (History-Aware Sampling Algorithm).
     
@@ -638,6 +660,7 @@ def train_hasa(model, train_loader, criterion_nored, optimizer, device,
     correct_samples = 0
     total_samples = 0
     total_selected_samples = 0
+    selected_indices_list = [] if return_selected_indices else None
     
     # Check if we're in warm-up phase
     is_warmup = hasa_trainer.is_warmup_phase()
@@ -686,6 +709,8 @@ def train_hasa(model, train_loader, criterion_nored, optimizer, device,
             # Statistics
             running_selected_loss += per_sample_loss.sum().item()
             total_selected_samples += batch_size
+            if return_selected_indices:
+                selected_indices_list.append(indices.cpu().numpy())
             
         else:
             # Phase B: Selection Phase
@@ -720,6 +745,9 @@ def train_hasa(model, train_loader, criterion_nored, optimizer, device,
             # Statistics
             running_selected_loss += selected_loss.sum().item()
             total_selected_samples += num_to_select
+            if return_selected_indices:
+                global_sel = indices[selected_batch_indices].cpu().numpy()
+                selected_indices_list.append(global_sel)
         
         # Accuracy is calculated on the entire batch for fairness
         _, predicted = torch.max(outputs.data, 1)
@@ -737,5 +765,8 @@ def train_hasa(model, train_loader, criterion_nored, optimizer, device,
     
     epoch_acc = correct_samples / total_samples
     
+    if return_selected_indices and selected_indices_list:
+        all_selected = np.unique(np.concatenate(selected_indices_list))
+        return epoch_loss, epoch_acc, hasa_trainer, all_selected
     return epoch_loss, epoch_acc, hasa_trainer
 
