@@ -2,6 +2,8 @@
 
 A modular implementation of robust stochastic gradient descent (SGD) algorithms for benchmarking on noisy datasets. Supports **Standard SGD**, **Min-k Loss SGD (MKL-SGD)**, **RHO-LOSS**, and **HASA (History-Aware Sampling Algorithm)** on CIFAR-100, MNIST, and a cloud classification dataset.
 
+Pypi Library Available at (https://github.com/msc35/hasa-py). Use: "pip install hasa".
+
 ## Overview
 
 This suite compares four training algorithms on datasets with known noise:
